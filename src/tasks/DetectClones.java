@@ -301,7 +301,11 @@ public class DetectClones {
 		
 	// Cleanup
 		if(cleanup) {
-			Files.deleteIfExists(tmpdir);
+			try {
+				FileUtils.deleteDirectory(tmpdir.toFile());
+			} catch (Exception e) {
+				System.err.println("Failed to delete a temporary directory, please do so manually: " + tmpdir.toAbsolutePath());
+			}
 		}
 	}
 	
