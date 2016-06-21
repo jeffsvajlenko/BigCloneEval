@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ ! -e ".bigcloneeval" ]
+then
+	echo "clearClones must be executed from within the commands directory."
+        exit -1
+fi
+
+cd ..
+java -cp "bin/:libs/*" tasks.ClearClones "$@"

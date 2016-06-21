@@ -1,0 +1,4 @@
+This folder contains the tool database.
+
+First time creation/initialization of the database can be acomplished
+using the init executable in the commands/ directory.

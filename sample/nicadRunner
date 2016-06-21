@@ -1,0 +1,23 @@
+#!/bin/bash
+
+ulimit -s hard
+
+root=`dirname $1`
+dir=`basename $1`
+path=$root/$dir
+
+# Go to NiCad installation directory
+cd /home/user/NiCad-4.0/
+
+# Execute NiCad, Suppress Output
+./nicad4 functions java "$path" myconfig > /dev/null 2> /dev/null
+
+# Convert Detected Clones Into BigCloneEval Format
+java -jar Convert.jar ${path}_functions-blind-abstract-clones/${dir}_functions-blind-abstract-clones-0.30.xml 2> /dev/null
+
+# Cleanup
+rm -rf ${path}_functions-blind-abstract-clones > /dev/null 2> /dev/null
+rm ${path}_functions-blind-abstract.xml > /dev/null 2> /dev/null
+rm ${path}_functions-clones*.log > /dev/null 2> /dev/null
+rm ${path}_functions-blind.xml > /dev/null 2> /dev/null
+rm ${path}_functions.xml > /dev/null 2> /dev/null
