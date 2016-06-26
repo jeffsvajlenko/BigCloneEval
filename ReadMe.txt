@@ -357,7 +357,55 @@ minimum clone size in pretty-printed source lines = 6 lines
 minimum clone size in tokens = 50 tokens
 clone-matcher: Coverage clone matcher with 70% coverage threshold
 
-These correspond to the settings we have used in our previous studies.
+These correspond to the settings we have used in our previous studies.+
+
+Tool Evaluation Report
+----------------------
+
+The tool evaluation report sumamrizes recall from a number of perspectives.
+
+Recall is reported per clone type.  Including Type-1, Type-2, Type-3 and Type-4.  The
+recall for Type-2 is reported for different common definitions of Type-2.  Since there is
+no agreed upon minimum similarity of a Type-3 clone, the Type-3 and Type-4 clones are
+split into a number of categories.  Note that sine all of the clones are semantic clones
+(implement a shared functionality), those which do not meet the Type-3 definition are 
+Type-4 clones.  We summarize the per-clone-type categories below:
+
+	Type-1: Recall for the Type-1 clones.
+	Type-2: Recall for all Type-2 clones (most generous definition).
+	Type-2 (blind): Type-2 clones which don't have a 1:1 mapping of identifier names.
+	Type-2 (consistent): Type-2 clones which have a 1:1 mapping of identifier names.
+	Very-Strongly Type-3: Clones with sytnactical similarity in range [90,100).
+	Strongly Type-3: Clones with sytnactical similarity in range [70,90)
+	Moderately Type-3: Clones with syntactical similarity in range [50,70)
+	Weakly Type-3 or Type-4: Clones with syntactical similarity in range [0,50)
+	
+The categories assume that Type-4 clones share less than 50% of their syntax.  Most Type-3
+clone detectors should have good recall in the Very-Strongly Type-3 range.  Very good
+Type-3 detectors also have good recall in the Strongly Type-3 while maintaining good
+precision.  It is expected that Moderately Type-3 clones are outside the scope of syntax
+based clone detection approaches, unless precision is significantly compromised.  Other
+techniques that do not rely so much on the syntax of the clone may perform better in this
+range.  The weakly Type-3/Type-4 clones are probably outside the scope of most or all
+clone detection techniques.
+
+Recall is also reported for Type-3/Type-4 clones in different syntactical similarity
+ranges.  It is reported for each range at a granularity of 5%: [0,5), [5,10), etc.  It is
+also reported for each minimum syntactical similarity at a granularity fo 5%: [0,100),
+[5,100), [10,100), etc.
+
+Recall is reported for all clones, for just the inter-project clones, and for just the
+intra-project clones.  Recall can then be compared for these different contexts.
+
+Recall is also reported for all clones, and then also the clones of each individual
+functionality in BigCloneBench.
+
+The evaluation report summarizes the number of referenc clones consdierd in each
+measurement.
+
+The evaluation report documents the version of BigCloneEval and BigCloneBench used to
+create it for future refernece.
+
 
 ------------------------------------------------------------------------------------------
 	Command Documentation
