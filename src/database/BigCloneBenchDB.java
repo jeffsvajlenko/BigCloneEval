@@ -1,6 +1,8 @@
 package database;
 
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -32,9 +34,10 @@ public class BigCloneBenchDB {
 	
 	private BigCloneBenchDB() throws SQLException {
 		BoneCPConfig config = new BoneCPConfig();
-		config.setJdbcUrl("jdbc:h2:bigclonebenchdb/bcb");
+		Path db = Paths.get("bigclonebenchdb/bcb").toAbsolutePath();
+		config.setJdbcUrl("jdbc:h2:" + db.toString());
 		config.setUsername("sa");
-		config.setPassword("");
+		config.setPassword("bigclonebencheval");
 		config.setMinConnectionsPerPartition(1);
 		config.setMaxConnectionsPerPartition(10);
 		config.setPartitionCount(1);

@@ -35,7 +35,7 @@ public class Clones {
 	public static long importClones(long id, Path path) throws IOException, SQLException {
 		// Import
 		Connection conn = ToolsDB.getConnection();
-		String sql = "INSERT INTO tool_" + id + "_clones SELECT * FROM csvread('" + path.toString() + "')";
+		String sql = "INSERT INTO tool_" + id + "_clones SELECT (type1, name1, startline1, endline1, type2, name2, startline2, endline2) FROM csvread('" + path.toString() + "')";
 		Statement stmt = conn.createStatement();
 		long retval = stmt.executeUpdate(sql);
 		conn.close();
