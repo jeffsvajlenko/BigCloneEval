@@ -37,7 +37,7 @@ public class BigCloneBenchDB {
 		Path db = Paths.get("bigclonebenchdb/bcb").toAbsolutePath();
 		config.setJdbcUrl("jdbc:h2:" + db.toString());
 		config.setUsername("sa");
-		config.setPassword("bigclonebencheval");
+		config.setPassword("");
 		config.setMinConnectionsPerPartition(1);
 		config.setMaxConnectionsPerPartition(10);
 		config.setPartitionCount(1);
