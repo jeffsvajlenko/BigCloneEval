@@ -50,7 +50,7 @@ from the following webpage:
 
 http://jeff.svajlenko.com/bigcloneeval
 
-Extract the contents of BigCloneBench (IJadataset_BCEvalVersion.tar.gz) into the
+Extract the contents of BigCloneBench (BigCloneBench_BCEvalVersion.tar.gz) into the
 'bigclonebenchdb' directory of the BigCloneEval distribution.
 
 ------------------------------------------------------------------------------------------
@@ -62,8 +62,8 @@ the following webpage:
 
 http://jeff.svajlenko.com/bigcloneeval
 
-Extract the contents of BigCloneBench into the 'ijadataset' directory of the
-BigCloneEval distribution.
+Extract the contents of IJaDataset (IJaDataset_BCEvalVersion.tar.gz) into the 'ijadataset'
+directory of the BigCloneEval distribution.
 
 This should create a directory 'ijadataset/bcb_reduced/' which contains one sub-directory
 per functionality in BigCloneBench.
