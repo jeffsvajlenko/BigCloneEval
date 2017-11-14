@@ -151,12 +151,13 @@ public class DetectClones {
 				panic(-1);
 				return;
 			}
+			scratchDirectory = FixPath.getAbsolutePath(scratchDirectory);
+			System.out.println(scratchDirectory);
 			if(Files.exists(scratchDirectory)) {
 				System.err.println("Scratch directory already exists.  Must specify a new one (to protect against accidental data loss).");
 				panic(-1);
 				return;
 			}
-			scratchDirectory = FixPath.getAbsolutePath(scratchDirectory);
 			try {
 				Files.createDirectories(scratchDirectory);
 			} catch (Exception e) {
