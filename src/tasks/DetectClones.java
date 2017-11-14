@@ -69,7 +69,7 @@ public class DetectClones {
 		
 		options.addOption(Option.builder("sd")
 								.longOpt("scratch-directory")
-								.desc("Directory to be used as scratch space.  Default is system tmp directory.")
+								.desc("Directory to be used as scratch space.  Default is system tmp directory.  Can not already exist.")
 								.hasArg()
 								.argName("path")
 								.build()
@@ -148,6 +148,11 @@ public class DetectClones {
 				scratchDirectory = Paths.get(line.getOptionValue("sd"));
 			} catch (Exception e) {
 				System.err.println("Invalid path for scratch directory.");
+				panic(-1);
+				return;
+			}
+			if(Files.exists(scratchDirectory)) {
+				System.err.println("Scratch directory already exists.  Must specify a new one (to protect against accidental data loss).");
 				panic(-1);
 				return;
 			}
