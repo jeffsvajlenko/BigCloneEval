@@ -205,7 +205,8 @@ public class DetectClones {
 		} catch (IOException e1) {
 			System.err.println("An exeception occured during detection:");
 			e1.printStackTrace(System.err);
-			System.exit(-1);
+			panic(-1);
+			return;
 		}
 	
 	// Cleanup
