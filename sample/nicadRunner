@@ -16,8 +16,8 @@ cd /home/user/NiCad-4.0/
 java -jar Convert.jar ${path}_functions-blind-abstract-clones/${dir}_functions-blind-abstract-clones-0.30.xml 2> /dev/null
 
 # Cleanup
-rm -rf ${path}_functions-blind-abstract-clones > /dev/null 2> /dev/null
-rm ${path}_functions-blind-abstract.xml > /dev/null 2> /dev/null
-rm ${path}_functions-clones*.log > /dev/null 2> /dev/null
-rm ${path}_functions-blind.xml > /dev/null 2> /dev/null
-rm ${path}_functions.xml > /dev/null 2> /dev/null
+#rm -rf ${path}_functions-blind-abstract-clones > /dev/null 2> /dev/null
+#rm ${path}_functions-blind-abstract.xml > /dev/null 2> /dev/null
+#rm ${path}_functions-clones*.log > /dev/null 2> /dev/null
+#rm ${path}_functions-blind.xml > /dev/null 2> /dev/null
+#rm ${path}_functions.xml > /dev/null 2> /dev/null
