@@ -152,7 +152,6 @@ public class DetectClones {
 				return;
 			}
 			scratchDirectory = FixPath.getAbsolutePath(scratchDirectory);
-			System.out.println(scratchDirectory);
 			if(Files.exists(scratchDirectory)) {
 				System.err.println("Scratch directory already exists.  Must specify a new one (to protect against accidental data loss).");
 				panic(-1);
@@ -289,7 +288,7 @@ public class DetectClones {
 	
 	public static void detect(Path tool, Path input, Writer out, Path scratchdir, int maxFiles, boolean cleanup) throws IOException {
 	// Partition
-		Path tmpdir = Files.createTempDirectory(input.getFileName().toString() + "_partition");
+		Path tmpdir = Files.createDirectories(scratchdir.resolve(input.getFileName().toString() + "_partition"));
 		DetectClones.partition(input, tmpdir, maxFiles);
 		
 	// Run for each partition
