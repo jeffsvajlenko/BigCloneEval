@@ -94,7 +94,7 @@ public class DetectClones {
 		}
 		
 		boolean fullclean = false;
-		Path dataset = Paths.get("ijadataset/bcb_reduced/");
+		Path dataset = Paths.get("bcb_reduced/");
 		
 	// Tool Runner
 		Path toolrunner;
