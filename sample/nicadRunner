@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# This tool runner works with the myconfig.cfg nicad configuration file included
+# You will need to modify the hard-coded installation below before running
+# Test this out on one of the IJaDataset directories (such as 11/) to test and 
+# see that clones are detected and output in the correct format for BigCloneEval
+# as specified in the readme.
+
 ulimit -s hard
 
 root=`dirname $1`
@@ -7,17 +13,19 @@ dir=`basename $1`
 path=$root/$dir
 
 # Go to NiCad installation directory
-cd /home/user/NiCad-4.0/
+cd /home/jeff/Applications/NiCad-4.0/
 
 # Execute NiCad, Suppress Output
 ./nicad4 functions java "$path" myconfig > /dev/null 2> /dev/null
 
 # Convert Detected Clones Into BigCloneEval Format
-java -jar Convert.jar ${path}_functions-blind-abstract-clones/${dir}_functions-blind-abstract-clones-0.30.xml 2> /dev/null
+#java -jar Convert.jar ${path}_functions-blind-abstract-clones/${dir}_functions-blind-abstract-clones-0.30.xml 2> /dev/null
+
+cat ${path}_functions-blind-abstract-clones/${dir}_functions-blind-abstract-clones-0.30.xml | sed 's$<source file="$$g' | sed 's$" startline="$,$g' | sed 's$" endline="$,$g' | sed 's$" pcid=.*"></source>$$g' | sed 's$<clone nlines=.*$$g' | sed 's$</clone>.*$$g' | sed 's$</clones>$$g' |sed 's$<clones>$$g' | sed 's$<cloneinfo.*$$g' | sed 's$<systeminfo.*$$g' | sed 's$<runinfo.*$$g' | sed '/^$/d' | paste -d ',' - - | sed "s#${path}/##g" | sed 's#/#,#g'
 
 # Cleanup
-#rm -rf ${path}_functions-blind-abstract-clones > /dev/null 2> /dev/null
-#rm ${path}_functions-blind-abstract.xml > /dev/null 2> /dev/null
-#rm ${path}_functions-clones*.log > /dev/null 2> /dev/null
-#rm ${path}_functions-blind.xml > /dev/null 2> /dev/null
-#rm ${path}_functions.xml > /dev/null 2> /dev/null
+rm -rf ${path}_functions-blind-abstract-clones > /dev/null 2> /dev/null
+rm ${path}_functions-blind-abstract.xml > /dev/null 2> /dev/null
+rm ${path}_functions-clones*.log > /dev/null 2> /dev/null
+rm ${path}_functions-blind.xml > /dev/null 2> /dev/null
+rm ${path}_functions.xml > /dev/null 2> /dev/null

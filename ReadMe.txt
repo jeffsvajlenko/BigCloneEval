@@ -202,7 +202,9 @@ the clones should be output in the format expected by the importClones command (
 next step), although any output is supported.  
 
 The 'sample/' directory contains the nicadRunner as an example bash script targeting
-Linux/OSX, and and iclonesRunner.cmd command script targeting Windows.
+Linux/OSX, and and iclonesRunner.cmd command script targeting Windows.  Note that these
+scripts won't run as is, and will require downloading and installing the clone detection
+tools, and modifying the runner to work with your computer's environment.
 
 The detectClones command takes this script as input, the maximum files the tool can handle
 without scalability issues on the available hardware, and a scratch directory to use in
