@@ -256,8 +256,7 @@ format.
 The evaluate command is used to measure the recall of the clone detection tool for
 BigCloneBench based on its imported clones.  This takes the ID of the tool, a file to
 output the tool evaluation report to, and a number of configuration options for
-customizing the recall evaluation experiment.  If no configuration options are provided,
-default options are used.
+customizing the recall evaluation experiment.
 
 Clone Matcher
 -------------
@@ -300,9 +299,6 @@ Similar to the minimum judges, the minimum confidence is the minimum agreement w
 multiple judges are used.  This is, for both code fragments, the minimum difference in
 true positive vs false positive votes by the judges.  Currently a small portion of the
 data has been seen by more than two judges, where this constraint is relevant.
-
-For now we reccomend just using the size constraints.  The other constraitns will be more
-useful as BigCloneBench developes.
 
 Similarity Type
 ---------------
@@ -349,9 +345,9 @@ If time allows, it is best to run for full range.  However, executing for a mini
 similarity of 50% is sufficient for most tools, as they have 0% or near-0% for the Weakly
 Type-3 / Type-4 category, and often similar for the Moderately Type-3.
 
-Defaults
---------
-The default settings are as follows:
+Reccomended Settings
+--------------------
+The reccomended settings are as follows:
 
 similarity type = both line and token (smaller measure)
 minimum clone size in original source lines = 6 lines
