@@ -42,7 +42,6 @@ public class ExactMatcher implements CloneMatcher {
 	}
 	
 	private boolean isDetected_helper(Clone clone) throws SQLException {
-		boolean retval = false;
 		Function f1 = Functions.get(clone.getFunction_id_one());
 		Function f2 = Functions.get(clone.getFunction_id_two());
 		
@@ -57,12 +56,12 @@ public class ExactMatcher implements CloneMatcher {
 		stmt.setInt(8, f2.getEndline());
 		
 		ResultSet rs = stmt.executeQuery();
-		if(rs.next()) {
-			retval = true;
-		}
-		rs.close();
 		
-		return retval;
+		try {
+			return rs.next();
+		} finally {
+			rs.close();
+		}
 	}
 
 	@Override
