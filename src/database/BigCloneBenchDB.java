@@ -35,7 +35,7 @@ public class BigCloneBenchDB {
 	private BigCloneBenchDB() throws SQLException {
 		BoneCPConfig config = new BoneCPConfig();
 		Path db = Paths.get("bigclonebenchdb/bcb").toAbsolutePath();
-		config.setJdbcUrl("jdbc:h2:" + db.toString());
+		config.setJdbcUrl("jdbc:h2:" + db.toString() + ";IFEXISTS=TRUE");
 		config.setUsername("sa");
 		config.setPassword("");
 		config.setMinConnectionsPerPartition(1);
