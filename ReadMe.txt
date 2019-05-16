@@ -29,9 +29,6 @@ Chanchal K. Roy (chanchal.roy@usask.ca)
 
 Complete the following steps to install the setup BigCloneEval.
 
-Alternatively, download the VM version fo BigCloneEval to have a pre-configured
-environment.
-
 ------------------------------------------------------------------------------------------
 	Step 1: Get the latest version of BigCloneEval
 ------------------------------------------------------------------------------------------
