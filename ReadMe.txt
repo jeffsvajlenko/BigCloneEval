@@ -5,10 +5,7 @@
 BigCloneEval is a framework for performing clone detection tool evaluation experiments
 with the BigCloneBench clone benchmark.
 
-BigCloneEval is available at http://jeff.svajlenko.com/bigcloneeval.
-
-BigCloneBench is available at http://jeff.svajlenko.com/bigclonebench
-
+Database and database files available at:  http://jeff.svajlenko.com/bigcloneeval.
 
 ==========================================================================================
                                    Contact Information
