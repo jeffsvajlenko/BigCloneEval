@@ -47,6 +47,8 @@ http://jeff.svajlenko.com/bigcloneeval
 Extract the contents of BigCloneBench (BigCloneBench_BCEvalVersion.tar.gz) into the
 'bigclonebenchdb' directory of the BigCloneEval distribution.
 
+To manually view this database, use h2database: http://h2database.com/html/main.html.
+
 ------------------------------------------------------------------------------------------
 	Step 3: Get the latest version of IJaDataset
 ------------------------------------------------------------------------------------------
