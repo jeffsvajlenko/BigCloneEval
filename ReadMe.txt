@@ -5,10 +5,7 @@
 BigCloneEval is a framework for performing clone detection tool evaluation experiments
 with the BigCloneBench clone benchmark.
 
-BigCloneEval is available at http://jeff.svajlenko.com/bigcloneeval.
-
-BigCloneBench is available at http://jeff.svajlenko.com/bigclonebench
-
+Database and database files available at:  http://jeff.svajlenko.com/bigcloneeval.
 
 ==========================================================================================
                                    Contact Information
@@ -29,7 +26,7 @@ Chanchal K. Roy (chanchal.roy@usask.ca)
 
 Complete the following steps to install the setup BigCloneEval.
 
-Alternatively, download the VM version fo BigCloneEval to have a pre-configured
+Alternatively, download the VM version of BigCloneEval to have a pre-configured
 environment. Username: `bigcloneeval`, password: `clones`.
 
 ------------------------------------------------------------------------------------------
@@ -52,6 +49,8 @@ http://jeff.svajlenko.com/bigcloneeval
 
 Extract the contents of BigCloneBench (BigCloneBench_BCEvalVersion.tar.gz) into the
 'bigclonebenchdb' directory of the BigCloneEval distribution.
+
+To manually view this database, use h2database: http://h2database.com/html/main.html.
 
 ------------------------------------------------------------------------------------------
 	Step 3: Get the latest version of IJaDataset

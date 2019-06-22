@@ -49,7 +49,7 @@ public class SubsumeMatcher implements CloneMatcher {
 	}
 	
 	private void init() throws SQLException {
-		String sql = "SELECT 1 FROM " + CloneMatcher.getTableName(this.toolid) + " where tool_id = ? and "
+		String sql = "SELECT 1 FROM " + CloneMatcher.getTableName(this.toolid) + " where "
 				+ "type1 = ? and name1 = ? and startline1 <= ? and endline1 >= ? and "
 				+ "type2 = ? and name2 = ? and startline2 <= ? and endline2 >= ?";
 		this.conn = ToolsDB.getConnection();
