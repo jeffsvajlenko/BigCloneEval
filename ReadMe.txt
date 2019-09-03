@@ -68,7 +68,13 @@ This should create a directory 'ijadataset/bcb_reduced/' which contains one sub-
 per functionality in BigCloneBench.
 
 ------------------------------------------------------------------------------------------
-	Step 4: Initialize the tools database
+	Step 4: Build the source code.
+------------------------------------------------------------------------------------------
+
+From thje root directory, run make.
+
+------------------------------------------------------------------------------------------
+	Step 5: Initialize the tools database
 ------------------------------------------------------------------------------------------
 
 From the commands/ directory execute the 'init' script.  This will initialize the tools
