@@ -4,132 +4,73 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Callable;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-
+import picocli.CommandLine;
 import util.FixPath;
 
-public class PartitionInput {
+@CommandLine.Command(
+        name = "partitionInput",
+        description = "partitions the files from the input directory to the output directory.",
+        mixinStandardHelpOptions = true
+)
+public class PartitionInput implements Callable<Void> {
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
 
+    @CommandLine.Option(
+            names = {"-i", "--input"},
+            description = "The directory of source code to partition.",
+            required = true,
+            paramLabel = "<PATH>"
+    )
+    private void setInput(Path input) {
+        if (!Files.exists(input))
+            throw new CommandLine.ParameterException(spec.commandLine(), "Input directory does not exist.");
+        if (!Files.isDirectory(input))
+            throw new CommandLine.ParameterException(spec.commandLine(), "Input must be a directory.");
+        this.input = input;
+    }
 
-	private static Options options;
-	private static HelpFormatter formatter;
-	
-	public static void panic(int exitval) {
-		formatter.printHelp(200, "partitionInput", "BigCloneEval-PartitionInput", options, "", true);
-		System.exit(exitval);
-		return;
-	}	
-	
-	public static void main(String args[]) {
-		options = new Options();
-		
-		options.addOption(Option.builder("i")
-								.longOpt("input")
-								.desc("The directory of source code to partition.")
-								.hasArg()
-								.argName("path")
-								.required()
-								.build()
-		);
-		
-		options.addOption(Option.builder("o")
-								.longOpt("output")
-								.desc("The directory to write the subsets to (each pair of partitions).")
-								.hasArg()
-								.argName("path")
-								.required()
-								.build()
-		);
-		
-		options.addOption(Option.builder("mf")
-								.longOpt("max-files")
-								.desc("Maximum files in each output subset (pair of partitions).")
-								.hasArg()
-								.argName("int")
-								.required()
-								.build()
-		);
-		
-		
-		formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line;
-		try {
-			line = parser.parse(options, args);
-		} catch(Exception e) {
-			panic(-1);
-			return;
-		}
-		
-		Path input;
-		Path output;
-		int maxfiles;
-	
-		try {
-			input = Paths.get(line.getOptionValue("i"));
-		} catch (Exception e) {
-			System.err.println("Invalid value for 'input'.");
-			panic(-1);
-			return;
-		}
-		
-		try {
-			output = Paths.get(line.getOptionValue("o"));
-		} catch (Exception e) {
-			System.err.println("Invalid value for 'output'.");
-			panic(-1);
-			return;
-		}
-		
-		output = FixPath.getAbsolutePath(output);
-		
-		try {
-			maxfiles = Integer.parseInt(line.getOptionValue("mf"));
-		} catch (Exception e) {
-			System.err.println("Invalid value for 'maxfiles'.");
-			panic(-1);
-			return;
-		}
-	
-		if(!Files.exists(input)) {
-			System.err.println("Input directory does not exist.");
-			panic(-1);
-			return;
-		}
-		if(!Files.isDirectory(input)) {
-			System.err.println("Input must be a directory.");
-			panic(-1);
-			return;
-		}
-		
-		if(Files.exists(output)) {
-			System.err.println("Output already exists.");
-			panic(-1);
-			return;
-		}
-		try {
-			Files.createDirectories(output);
-		} catch (IOException e) {
-			System.err.println("Output directory could not be created.");
-			panic(-1);
-			return;
-		}
-		
-		try {
-			DetectClones.partition(input, output, maxfiles);
-		} catch (IOException e1) {
-			System.err.println("An exeception occured during partitioning:");
-			e1.printStackTrace(System.err);
-			System.exit(-1);
-		}
-		
-	}
-	
+    private Path input;
+
+    @CommandLine.Option(
+            names = {"-o", "--output"},
+            description = "The directory to write the subsets to (each pair of partitions).",
+            paramLabel = "<PATH>",
+            required = true
+    )
+    private void setOutput(Path output) {
+        output = FixPath.getAbsolutePath(output);
+
+        if (Files.exists(output))
+            throw new CommandLine.ParameterException(spec.commandLine(), "Output already exists.");
+        try {
+            Files.createDirectories(output);
+        } catch (IOException e) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Output directory could not be created.");
+        }
+        this.output = output;
+    }
+
+    private Path output;
+
+    @CommandLine.Mixin
+    private MixinOptions.MaxFiles maxFiles;
+
+    public static void main(String[] args) {
+        new CommandLine(new PartitionInput()).execute(args);
+    }
+
+    public Void call() {
+        try {
+            DetectClones.partition(input, output, maxFiles.maxFiles);
+        } catch (IOException e1) {
+            System.err.println("An exeception occured during partitioning:");
+            e1.printStackTrace(System.err);
+            System.exit(-1);
+        }
+        return null;
+    }
+
 }

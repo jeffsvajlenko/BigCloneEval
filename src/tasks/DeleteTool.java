@@ -1,96 +1,46 @@
 package tasks;
 
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 //import java.util.Scanner;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
+import picocli.CommandLine;
+import picocli.CommandLine.Mixin;
+import tasks.MixinOptions.*;
 
 import database.Tool;
 import database.Tools;
 
-public class DeleteTool {
+@CommandLine.Command(
+        name = "deleteTool",
+        description = "Deletes a tool, specified by its ID, from the framework. Also removes any imported clones for this tool.",
+        mixinStandardHelpOptions = true)
+public class DeleteTool implements Callable<Void> {
+    @Mixin
+    private ToolId toolId;
 
-	private static Options options;
-	private static HelpFormatter formatter;
-	
-	public static void panic(int exitval) {
-		formatter.printHelp(200, "deleteTool", "BigCloneEval-DeleteTool", options, "", true);
-		System.exit(exitval);
-		return;
-	}	
-	
-	public static void main(String args[]) {
-		options = new Options();
-		
-		options.addOption(Option.builder("t")
-				.longOpt("tool")
-				.hasArg()
-				.argName("ID")
-				.desc("The ID of the tool to delete.")
-				.required()
-				.build()
-		);
-		
-		//options.addOption(Option.builder("i")
-		//						.longOpt("interactive")
-		//						.desc("Enables interactive mode for using delete tool.")
-		//				        .build()
-		//);
-		
-		options.addOption(Option.builder("h")
-				.longOpt("help")
-				.desc("Prints this usage information.")
-				.build()
-		);
-		
-		formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line;
-		try {
-			line = parser.parse(options, args);
-		} catch(Exception e) {
-			System.err.println(e.getMessage());
-			panic(-1);
-			return;
-		}
-		
-		if(line.hasOption("h")) {
-			panic(0);
-		//} else if(line.hasOption("i")) {
-		//	interactive();
-		} else if (line.hasOption("t")) {
-			String sid = line.getOptionValue("t");
+    public static void main(String[] args) {
+        new CommandLine(new DeleteTool()).execute(args);
+    }
 
-			long id=-1;
-			try {
-				id = Long.parseLong(sid);
-				Tool tool = Tools.getTool(id);
-				if(tool == null) throw new IllegalArgumentException();
-				Tools.deleteToolAndData(id);
-			} catch (SQLException e) {
-				System.err.println("\tSome error occured with the database connection or interaction.");
-				System.err.println("\n\tPlease try a fresh copy of the datbase, and report the error to.");
-				System.err.println("\n\tthe developers.");
-				e.printStackTrace(System.err);
-				System.exit(-1);
-			} catch (NumberFormatException e) {
-				System.err.println("\tInvalid tool identifier value.");
-				System.exit(-1);
-			} catch (IllegalArgumentException e) {
-				System.err.println("\tNo tool exists with the ID" + id + " .");
-				System.exit(-1);
-			}
-		} else {
-			panic(0);
-		}
-	}
-	
+    public Void call() {
+        try {
+            Tool tool = Tools.getTool(toolId.id);
+            if (tool == null) throw new IllegalArgumentException();
+            Tools.deleteToolAndData(toolId.id);
+        } catch (SQLException e) {
+            System.err.println("\tSome error occured with the database connection or interaction.");
+            System.err.println("\n\tPlease try a fresh copy of the datbase, and report the error to.");
+            System.err.println("\n\tthe developers.");
+            e.printStackTrace(System.err);
+            System.exit(-1);
+        } catch (IllegalArgumentException e) {
+            System.err.println("\tNo tool exists with the ID" + toolId.id + " .");
+            System.exit(-1);
+        }
+        return null;
+    }
+
 //	public static void interactive() {
 //		Scanner scanner = new Scanner(System.in);
 //		long id = -1;
@@ -146,5 +96,5 @@ public class DeleteTool {
 //			System.exit(-1);
 //		}
 //	}
-	
+
 }

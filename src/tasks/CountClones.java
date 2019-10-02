@@ -1,99 +1,46 @@
 package tasks;
 
 import java.sql.SQLException;
-//import java.util.Scanner;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
+import java.util.concurrent.Callable;
 
 import database.Clones;
 import database.Tool;
 import database.Tools;
+import picocli.CommandLine;
+import picocli.CommandLine.Mixin;
+import tasks.MixinOptions.*;
 
-public class CountClones {
+@CommandLine.Command(
+        name = "countClones",
+        mixinStandardHelpOptions = true,
+        description = "Count the number of clones that have been imported for the tool.")
+public class CountClones implements Callable<Void> {
+    @Mixin
+    private ToolId toolId;
 
-	private static Options options;
-	private static HelpFormatter formatter;
-	
-	public static void panic(int exitval) {
-		formatter.printHelp(200, "countClones", "BigCloneEval-CountClones", options, "", true);
-		System.exit(exitval);
-		return;
-	}	
-	
-	public static void main(String args[]) {
-		options = new Options();
-		
-		//options.addOption(Option.builder("i")
-		//						.longOpt("interactive")
-		//						.desc("Enables interactive mode for using delete tool.")
-		//				        .build()
-		//);
-		
-		options.addOption(Option.builder("t")
-								.longOpt("tool")
-								.hasArg()
-								.argName("ID")
-								.desc("The ID of the tool to delete.")
-								.required()
-								.build()
-		);
-		
-		options.addOption(Option.builder("h")
-				.longOpt("help")
-				.desc("Prints this usage information.")
-				.build()
-		);
-		
-		formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line;
-		try {
-			line = parser.parse(options, args);
-		} catch(Exception e) {
-			System.err.println(e.getMessage());
-			panic(-1);
-			return;
-		}
-		
-		if(line.hasOption("h")) {
-			panic(0);
-		//} else if(line.hasOption("i")) {
-		//	interactive();
-		} else if (line.hasOption("t")) {
-			String sid = line.getOptionValue("t");
+    public static void main(String[] args) {
+        new CommandLine(new CountClones()).execute(args);
+    }
 
-			long id=-1;
-			try {
-				id = Long.parseLong(sid);
-				Tool tool = Tools.getTool(id);
-				if(tool == null) throw new IllegalArgumentException();
-				long num = Clones.numClones(id);
-				System.out.println(num);
-			} catch (SQLException e) {
-				System.err.println("\tSome error occured with the database connection or interaction.");
-				System.err.println("\tPlease try a fresh copy of the datbase, and report the error to.");
-				System.err.println("\tthe developers.");
-				e.printStackTrace(System.err);
-				System.exit(-1);
-			} catch (NumberFormatException e) {
-				System.err.println("\tInvalid tool identifier value.");
-				System.exit(-1);
-			} catch (IllegalArgumentException e) {
-				System.err.println("\tNo tool exists with the ID " + id + " .");
-				System.exit(-1);
-			}
-		} else {
-			panic(-1);
-		}
-		
-	}
-	
+    public Void call() {
+        try {
+            Tool tool = Tools.getTool(toolId.id);
+            if (tool == null) throw new IllegalArgumentException();
+            long num = Clones.numClones(toolId.id);
+            System.out.println(num);
+        } catch (SQLException e) {
+            System.err.println("\tSome error occured with the database connection or interaction.");
+            System.err.println("\tPlease try a fresh copy of the datbase, and report the error to.");
+            System.err.println("\tthe developers.");
+            e.printStackTrace(System.err);
+            System.exit(-1);
+        } catch (IllegalArgumentException e) {
+            System.err.println("\tNo tool exists with the ID " + toolId.id + " .");
+            System.exit(-1);
+        }
+        return null;
+    }
+
 //	public static void interactive() {
 //		long id;
 //		Scanner scanner = new Scanner(System.in);
@@ -146,5 +93,5 @@ public class CountClones {
 //			System.exit(-1);
 //		}
 //	}
-	
+
 }
