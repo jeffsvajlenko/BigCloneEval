@@ -11,7 +11,11 @@ import util.FixPath;
 
 @CommandLine.Command(
         name = "partitionInput",
-        description = "partitions the files from the input directory to the output directory.",
+        description = "Employs deterministic input partitioning to split an input that is too large for a tool " +
+                "to process into a number of smaller inputs. When the tool is executed for the smaller inputs, " +
+                "and the detected clones merged, it is equivalent to executing the tool for the larger input " +
+                "(that may be outside of the tool's scalability constraints). This command is useful if executing " +
+                "your tool manually. This is automatically used with the detectClones command.",
         mixinStandardHelpOptions = true,
         versionProvider = util.Version.class)
 public class PartitionInput implements Callable<Void> {
