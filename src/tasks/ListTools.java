@@ -14,8 +14,8 @@ import picocli.CommandLine;
         name = "listTools",
         description = "Lists the tools registered in the database. " +
                 "Including their ID, name and description.",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class ListTools implements Callable<Void> {
 
     public static void main(String[] args) {

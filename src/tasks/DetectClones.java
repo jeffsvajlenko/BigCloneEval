@@ -33,8 +33,8 @@ import util.StreamGobbler;
                 "and the scalability limits of the tool in terms of the maximum input size measured in source files. " +
                 "Used deterministic input partitioning to overcome scalability limits. " +
                 "Optional, clone detection can be performed manually if desired.",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class DetectClones implements Callable<Void> {
 
     @CommandLine.Spec

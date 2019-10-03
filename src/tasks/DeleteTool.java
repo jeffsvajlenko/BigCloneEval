@@ -14,7 +14,8 @@ import database.Tools;
 @CommandLine.Command(
         name = "deleteTool",
         description = "Deletes a tool, specified by its ID, from the framework. Also removes any imported clones for this tool.",
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class DeleteTool implements Callable<Void> {
     @Mixin
     private ToolId toolId;

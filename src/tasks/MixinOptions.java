@@ -248,7 +248,7 @@ abstract class MixinOptions {
         Integer minjudges = null;
 
         @CommandLine.Option(
-                names = {"-c", "--mic", "--minimum-confidence"},
+                names = {"--mic", "--minimum-confidence"},
                 description = "Minimum confidence.",
                 paramLabel = "<int>"
         )

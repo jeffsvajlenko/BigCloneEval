@@ -34,8 +34,8 @@ import util.FixPath;
                 "Highly configureable, including using custom clone-matching algorithms. " +
                 "Summarizes recall per clone type, per inter vs intra-project clones, per functionality in BigCloneBench" +
                 "and for different syntactical similarity regions in the output tool evaluation report.",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class EvaluateTool implements Callable<Void> {
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;

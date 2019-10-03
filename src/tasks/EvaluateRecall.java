@@ -23,8 +23,8 @@ import static evaluate.ToolEvaluator.*;
         description = "Measures the recall of the clones given. Highly configureable." +
                 "Summarizes recall per clone type, per inter vs intra-project clones, per functionality in " +
                 "BigCloneBench and for different syntactical similarity regions in the output tool evaluation report.",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class EvaluateRecall implements Callable<Void> {
 
     @CommandLine.Spec
@@ -42,7 +42,7 @@ public class EvaluateRecall implements Callable<Void> {
     private Double matcher_coverage = null;
 
     @CommandLine.Option(
-            names = {"-c", "--matcher-coverage"},
+            names = {"-m", "--matcher-coverage"},
             description = "Minimum coverage of clone-matcher: [0.0,1.0].",
             paramLabel = "double",
             required = true

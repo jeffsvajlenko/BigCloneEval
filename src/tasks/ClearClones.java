@@ -13,8 +13,9 @@ import database.Tools;
 
 @CommandLine.Command(
         name = "clearClones",
+        description = "Removes the imported clones for the specified registered tool.",
         mixinStandardHelpOptions = true,
-        description = "Removes the imported clones for the specified registered tool.")
+        versionProvider = util.Version.class)
 public class ClearClones implements Callable<Void> {
     @Mixin
     private ToolId toolId;

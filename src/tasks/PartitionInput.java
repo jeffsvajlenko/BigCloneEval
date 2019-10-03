@@ -12,8 +12,8 @@ import util.FixPath;
 @CommandLine.Command(
         name = "partitionInput",
         description = "partitions the files from the input directory to the output directory.",
-        mixinStandardHelpOptions = true
-)
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class PartitionInput implements Callable<Void> {
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;

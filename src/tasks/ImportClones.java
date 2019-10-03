@@ -16,11 +16,11 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(
         name = "importClones",
-        mixinStandardHelpOptions = true,
         description = "Imports the clones detected by a tool in IJaDataset into the framework for evaluation. " +
                 "Clones are provided as clone pairs in a simple CSV file. " +
-                "See documentation below for the expected format."
-)
+                "See documentation below for the expected format.",
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class ImportClones implements Callable<Void> {
     @CommandLine.Spec
     private CommandLine.Model.CommandSpec spec;

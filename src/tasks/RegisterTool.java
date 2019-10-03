@@ -9,12 +9,12 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
         name = "registerTool",
-        mixinStandardHelpOptions = true,
         description = "Registers a clone detection tool with the framework. " +
                 "Requires a name and description of the tool, which is stored in the tools database. " +
                 "Returns a unique identifier for the tool for indicating the target tool for the other commands. " +
-                "Name and description are for reference by the user."
-)
+                "Name and description are for reference by the user.",
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
 public class RegisterTool implements Callable<Void> {
 
     @CommandLine.Option(

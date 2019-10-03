@@ -12,8 +12,9 @@ import tasks.MixinOptions.*;
 
 @CommandLine.Command(
         name = "countClones",
+        description = "Count the number of clones that have been imported for the tool.",
         mixinStandardHelpOptions = true,
-        description = "Count the number of clones that have been imported for the tool.")
+        versionProvider = util.Version.class)
 public class CountClones implements Callable<Void> {
     @Mixin
     private ToolId toolId;
@@ -44,12 +45,12 @@ public class CountClones implements Callable<Void> {
 //	public static void interactive() {
 //		long id;
 //		Scanner scanner = new Scanner(System.in);
-//		
+//
 //		try {
 //			System.out.println();
 //			System.out.println("::::::::::::::::::::::::: BigCloneBench - Count Clones :::::::::::::::::::::::::");
 //			System.out.println(" Specify the ID of the tool.  Or blank to cancel.");
-//			
+//
 //			while(true) {
 //				System.out.println();
 //				System.out.print(" ID: ");
@@ -76,14 +77,14 @@ public class CountClones implements Callable<Void> {
 //				}
 //				break;
 //			}
-//			
+//
 //			long num = Clones.numClones(id);
-//			
+//
 //			System.out.println();
 //			System.out.println("    There are " + num + " clones associated with this tool.");
 //			System.out.println();
 //			System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-//			
+//
 //		} catch (SQLException e) {
 //			System.out.println("    ERROR: Problem with database connection or schema.");
 //			System.out.println(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
@@ -95,3 +96,4 @@ public class CountClones implements Callable<Void> {
 //	}
 
 }
+
