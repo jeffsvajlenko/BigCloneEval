@@ -5,6 +5,34 @@ with the BigCloneBench clone benchmark.
 
 Database and database files available at:  http://jeff.svajlenko.com/bigcloneeval.
 
+<details><summary>Table of Contents</summary>
+
+  * [Contact Information](#contact-information)
+  * [Installation and Setup](#installation-and-setup)
+     * [Step 1: Get the latest version of BigCloneEval](#step-1-get-the-latest-version-of-bigcloneeval)
+     * [Step 2: Get the latest version of BigCloneBench](#step-2-get-the-latest-version-of-bigclonebench)
+     * [Step 3: Get the latest version of IJaDataset](#step-3-get-the-latest-version-of-ijadataset)
+     * [Step 4: Build the source code.](#step-4-build-the-source-code)
+     * [Step 5: Initialize the tools database](#step-5-initialize-the-tools-database)
+  * [Using BigCloneEval](#using-bigcloneeval)
+     * [Experimental Process](#experimental-process)
+     * [Commands Summary](#commands-summary)
+     * [Step 1: Register Tool](#step-1-register-tool)
+     * [Step 2: Clone Detection](#step-2-clone-detection)
+     * [Step 3: Import Clones](#step-3-import-clones)
+     * [Step 4: Execute evaluation](#step-4-execute-evaluation)
+  * [Command Documentation](#command-documentation)
+     * [init](#init)
+     * [registerTool](#registertool)
+     * [listTools](#listtools)
+     * [detectClones](#detectclones)
+     * [importClones](#importclones)
+     * [deleteTool](#deletetool)
+     * [clearClones](#clearclones)
+     * [evaluate](#evaluate)
+     
+</details>
+
 ## Contact Information
 
 We are happy to answer any of your questions regarding BigCloneEval or BigCloneBench.
