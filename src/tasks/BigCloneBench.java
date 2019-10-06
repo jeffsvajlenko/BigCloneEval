@@ -21,8 +21,7 @@ import java.util.concurrent.Callable;
                 PartitionInput.class,
                 RegisterTool.class,
                 CommandLine.HelpCommand.class,
-        },
-        exitCodeOnSuccess = 2
+        }
 )
 public class BigCloneBench implements Callable<Void> {
     @CommandLine.Spec

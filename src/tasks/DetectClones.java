@@ -24,6 +24,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import tasks.MixinOptions.*;
 
+import util.FixPath;
 import util.StreamGobbler;
 
 @CommandLine.Command(
@@ -63,6 +64,7 @@ public class DetectClones implements Callable<Void> {
             paramLabel = "<PATH>"
     )
     private void setToolRunner(File toolRunner) {
+        toolRunner = FixPath.getAbsolutePath(toolRunner.toPath()).toFile();
         if (!toolRunner.exists()) {
             throw new CommandLine.ParameterException(spec.commandLine(), "Tool runner does not exist.");
         } else if (!Files.isExecutable(toolRunner.toPath())) {

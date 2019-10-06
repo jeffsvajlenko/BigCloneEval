@@ -36,7 +36,7 @@ abstract class MixinOptions {
             output = FixPath.getAbsolutePath(output.toPath()).toFile();
             if (output.isDirectory()) {
                 throw new CommandLine.ParameterException(spec.commandLine(), "Specified output report file is an existing directory.");
-            } else if (!output.canWrite()) {
+            } else if (output.exists() && !output.canWrite()) {
                 throw new CommandLine.ParameterException(spec.commandLine(), "Output file already exists, but is not over-writable.");
             } else if (!output.exists()) {
                 try {
