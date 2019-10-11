@@ -7,6 +7,6 @@ public class Version implements CommandLine.IVersionProvider {
 
     @Override
     public String[] getVersion() {
-        return new String[] {"1.0.0." + version};
+        return new String[] {"1.1.0." + version};
     }
 }
