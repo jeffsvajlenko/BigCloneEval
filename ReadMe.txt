@@ -67,6 +67,10 @@ directory of the BigCloneEval distribution.
 This should create a directory 'ijadataset/bcb_reduced/' which contains one sub-directory
 per functionality in BigCloneBench.
 
+Mirrors:
+Database, BigCloneEval Version: https://www.dropbox.com/s/z2k8r78l63r68os/BigCloneBench_BCEvalVersion.tar.gz?dl=0
+IJaDataset, BigCloneEval Version: https://www.dropbox.com/s/xdio16u396imz29/IJaDataset_BCEvalVersion.tar.gz?dl=0
+
 ------------------------------------------------------------------------------------------
 	Step 4: Build the source code.
 ------------------------------------------------------------------------------------------
