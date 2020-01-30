@@ -75,7 +75,7 @@ IJaDataset, BigCloneEval Version: https://www.dropbox.com/s/xdio16u396imz29/IJaD
 	Step 4: Build the source code.
 ------------------------------------------------------------------------------------------
 
-From thje root directory, run make.
+From the root directory, run make.
 
 ------------------------------------------------------------------------------------------
 	Step 5: Initialize the tools database
