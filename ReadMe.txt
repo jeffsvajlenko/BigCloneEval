@@ -47,6 +47,8 @@ from the following webpage:
 
 http://jeff.svajlenko.com/bigcloneeval
 
+Direct link: https://www.dropbox.com/s/z2k8r78l63r68os/BigCloneBench_BCEvalVersion.tar.gz?dl=0
+
 Extract the contents of BigCloneBench (BigCloneBench_BCEvalVersion.tar.gz) into the
 'bigclonebenchdb' directory of the BigCloneEval distribution.
 
@@ -61,15 +63,13 @@ the following webpage:
 
 http://jeff.svajlenko.com/bigcloneeval
 
+Direct link: https://www.dropbox.com/s/xdio16u396imz29/IJaDataset_BCEvalVersion.tar.gz?dl=0
+
 Extract the contents of IJaDataset (IJaDataset_BCEvalVersion.tar.gz) into the 'ijadataset'
 directory of the BigCloneEval distribution.
 
 This should create a directory 'ijadataset/bcb_reduced/' which contains one sub-directory
 per functionality in BigCloneBench.
-
-Mirrors:
-Database, BigCloneEval Version: https://www.dropbox.com/s/z2k8r78l63r68os/BigCloneBench_BCEvalVersion.tar.gz?dl=0
-IJaDataset, BigCloneEval Version: https://www.dropbox.com/s/xdio16u396imz29/IJaDataset_BCEvalVersion.tar.gz?dl=0
 
 ------------------------------------------------------------------------------------------
 	Step 4: Build the source code.
