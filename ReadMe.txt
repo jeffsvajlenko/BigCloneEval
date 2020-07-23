@@ -27,7 +27,12 @@ Chanchal K. Roy (chanchal.roy@usask.ca)
 Complete the following steps to install the setup BigCloneEval.
 
 Alternatively, download the VM version of BigCloneEval to have a pre-configured
-environment. Username: `bigcloneeval`, password: `clones`.
+environment. Username: `bce`, password: `clones`.
+
+VM available in VMWare format at: https://1drv.ms/u/s!AhXbM6MKt_yLj_42w4Y-l5isPPiOOw?e=SIS5yW
+
+The VM was created with VMWare Player Workstation, which is free for personal and educational
+purposes: https://www.vmware.com/products/workstation-player.html.
 
 ------------------------------------------------------------------------------------------
 	Step 1: Get the latest version of BigCloneEval
