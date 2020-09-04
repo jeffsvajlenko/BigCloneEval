@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # BigCloneEval: Evaluating Clone Detection Tools with BigCloneBench
 
 BigCloneEval is a framework for performing clone detection tool evaluation experiments
@@ -1315,5 +1314,4 @@ BigCloneEval is distributed as an eclipse project.  So the easiest way to develo
 Example:
 ```
   $ ./evaluate -t 3 -o ~/report -st both -m Coverage "CoverageMatcher 0.7 ratio 0.2" -mis 50 -mil 10 -mip 10 -mit 50
->>>>>>> dcbf0d4077fc6df69e64bef8bb5f953234adfbd8
 ```
