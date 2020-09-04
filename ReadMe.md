@@ -5,7 +5,7 @@ with the BigCloneBench clone benchmark.
 
 Database and database files available at:  http://jeff.svajlenko.com/bigcloneeval.
 
-<details><summary>Table of Contents</summary>
+## Table of Contents
 
   * [Contact Information](#contact-information)
   * [Installation and Setup](#installation-and-setup)
@@ -30,8 +30,6 @@ Database and database files available at:  http://jeff.svajlenko.com/bigcloneeva
      * [deleteTool](#deletetool)
      * [clearClones](#clearclones)
      * [evaluate](#evaluate)
-     
-</details>
 
 ## Contact Information
 
