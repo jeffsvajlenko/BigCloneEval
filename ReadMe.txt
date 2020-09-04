@@ -80,7 +80,7 @@ per functionality in BigCloneBench.
 	Step 4: Build the source code.
 ------------------------------------------------------------------------------------------
 
-From thje root directory, run make.
+From the root directory, run make.
 
 ------------------------------------------------------------------------------------------
 	Step 5: Initialize the tools database
