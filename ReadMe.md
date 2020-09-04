@@ -57,7 +57,7 @@ into the main repository.
 @exKAZUu  
 @T45K
 
-(An always up-to-date list can be found [here](https://github.com/jeffsvajlenko/BigCloneEval/graphs/contributors)
+(An always up-to-date list can be found [here](https://github.com/jeffsvajlenko/BigCloneEval/graphs/contributors))
 
 ## Installation and Setup
 
