@@ -1,0 +1,8 @@
+/toolsdb/*.db
+/bigclonebenchdb/*.db
+
+/ijadataset/bcb_reduced
+
+/bin/
+
+/src/util/Version.java

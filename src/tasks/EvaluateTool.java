@@ -10,13 +10,10 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import cloneMatchingAlgorithms.CloneMatcher;
 import cloneMatchingAlgorithms.CoverageMatcher;
@@ -27,427 +24,100 @@ import database.Functionality;
 import database.Tool;
 import database.Tools;
 import evaluate.ToolEvaluator;
+import picocli.CommandLine;
 import util.BigCloneEvalVersion;
 import util.FixPath;
 
-public class EvaluateTool {
-	
-	private static Options options;
-	private static HelpFormatter formatter;
-	
-	public static void panic(String error, int exitval) {
-		System.err.println(error);
-		System.exit(exitval);
-		return;
-	}
-	
-	public static void panic(int exitval) {
-		formatter.printHelp(200, "evaluateTool", "BigCloneEval-EvaluateTool", options, "", true);
-		System.exit(exitval);
-		return;
-	}
-	
-	public static void main(String args[]) {
-		options = new Options();
-		
-// Essential Configurations
-		
-		options.addOption(Option.builder("t")
-								.longOpt("tool")
-								.hasArg()
-								.argName("id")
-								.desc("The ID of the tool to evaluate.")
-								.build()
-		);
-		
-		options.addOption(Option.builder("o")
-								.longOpt("output")
-								.hasArg()
-								.argName("path")
-								.desc("A file to output ")
-								.build()
-		);
-		
-		options.addOption(Option.builder("st")
-								.longOpt("similarity-type")
-								.hasArg()
-								.argName("type")
-								.desc("How reference clone similarity should be measured: (both/line/token/avg).  Default both.")
-								.build()
-		);
-		
-		options.addOption(Option.builder("m")
-								.longOpt("matcher")
-								.desc("Specify the clone matcher.  See documentation for configuration strings.\n"
-									+ "Default is coverage-matcher with 70% coverage threshold.")
-								.hasArg()
-								.argName("matcher")
-								.build()
-		);
-		
-// Extent
-		
-		options.addOption(Option.builder("mis")
-				.longOpt("minimum-similarity")
-				.hasArg()
-				.argName("int")
-				.desc("Minimum clone similarity to evaluate for.  In range [0,100], must be a multiple of 5.")
-				.build()
-		);
-		
-// Constraints
-		
-		options.addOption(Option.builder("mil")
-								.longOpt("minimum-lines")
-								.desc("Adds a minimum clone size, in lines, constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-		options.addOption(Option.builder("mal")
-								.longOpt("maximum-lines")
-								.desc("Adds a maximum clone size, in lines, constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-		options.addOption(Option.builder("mip")
-								.longOpt("minimum-pretty")
-								.desc("Adds a minimum clone size, in pretty-printed lines, constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-		options.addOption(Option.builder("map")
-								.longOpt("maximum-pretty")
-								.desc("Adds a maximum clone size, in pretty-printed lines, constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
+@CommandLine.Command(
+        name = "evaluateTool",
+        description = "Measures the recall of the specific tool based on the clones imported for it. " +
+                "Highly configureable, including using custom clone-matching algorithms. " +
+                "Summarizes recall per clone type, per inter vs intra-project clones, per functionality in BigCloneBench" +
+                "and for different syntactical similarity regions in the output tool evaluation report.",
+        mixinStandardHelpOptions = true,
+        versionProvider = util.Version.class)
+public class EvaluateTool implements Callable<Void> {
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
 
-		options.addOption(Option.builder("mit")
-								.longOpt("minimum-tokens")
-								.desc("Adds a minimum clone size, in tokens, constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-		options.addOption(Option.builder("mat")
-								.longOpt("maximum-tokens")
-								.desc("Adds a maximum clone size, in tokens, constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-		options.addOption(Option.builder("mij")
-								.longOpt("minimum-judges")
-								.desc("Adds a minimum judges constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-		options.addOption(Option.builder("mic")
-								.longOpt("minimum-confidence")
-								.desc("Adds a minimum confidence constraint to the reference clones.")
-								.hasArg()
-								.argName("int")
-								.build()
-		);
-		
-// Support Options
-		options.addOption(Option.builder("i")
-				                .longOpt("interactive")
-				                .desc("Enables interactive mode for using evaluate tool.")
-				                .build()
-		);
-		
-		options.addOption(Option.builder("h")
-				                .longOpt("help")
-				                .desc("Prints the usage information.")
-				                .build()
-		);
-		
-		formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line;
-		try {
-			line = parser.parse(options, args);
-		} catch(Exception e) {
-			panic(-1);
-			return;
-		}
-		
-		
-		
-		if(line.hasOption("h")) {
-			panic(0);
-		//} else if (line.hasOption("i")) {
-		//	//interactive();
-		} else if (line.hasOption("t")) {
-			try{
-				String sline;
-				long id;
-				Tool tool;
-				Path output;
-				int simtype;
-				CloneMatcher matcher;
-				
-			// Get Tool
-				try{
-					id = Long.parseLong(line.getOptionValue("t"));
-				} catch (NumberFormatException e) {
-					panic("Invalid tool ID value.",-1);
-					return;
-				}
-				
-				tool = Tools.getTool(id);
-				if(tool == null) {
-					panic("There is no such tool with ID " + id + ".",-1);
-					return;
-				}
-				
-			// Get Similarity Type
-				if(!line.hasOption("st")) {
-					simtype = ToolEvaluator.SIMILARITY_TYPE_BOTH;
-				} else {
-					sline = line.getOptionValue("st");
-					if(sline.equals("both")) {
-						simtype = ToolEvaluator.SIMILARITY_TYPE_BOTH;
-					} else if (sline.equals("line")) {
-						simtype = ToolEvaluator.SIMILARITY_TYPE_LINE;
-					} else if (sline.equals("token")) {
-						simtype = ToolEvaluator.SIMILARITY_TYPE_TOKEN;
-					} else if (sline.equals("avg")) {
-						simtype = ToolEvaluator.SIMILARITY_TYPE_AVG;
-					} else {
-						panic("Invalid similarity type: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Get MatchergetMatcher()
-				if(!line.hasOption("m")) {
-					matcher = new CoverageMatcher(id, 0.7, null, null);
-				} else {
-					sline = line.getOptionValue("m");
-					String [] parts = sline.split("\\s+",2);
-					try {
-						matcher = CloneMatcher.load(id, parts[0], parts[1]);
-					} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
-							| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						System.err.println("Error loading clone matcher.  Please see the exception for details: ");
-						e.printStackTrace(System.err);
-						panic(-1);
-						return;
-					}
-				}	
-				
-			// Min Lines
-				Integer min_lines;
-				if(!line.hasOption("mil")) {
-					min_lines = null;
-				} else {
-					sline = line.getOptionValue("mil");
-					try {
-						min_lines = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mil: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Max Lines
-				Integer max_lines;
-				if(!line.hasOption("mal")) {
-					max_lines = null;
-				} else {
-					sline = line.getOptionValue("mal");
-					try {
-						max_lines = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mal: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Min Tokens
-				Integer min_tokens;
-				if(!line.hasOption("mit")) {
-					min_tokens = null;
-				} else {
-					sline = line.getOptionValue("mit");
-					try {
-						min_tokens = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mit: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Max Tokens
-				Integer max_tokens;
-				if(!line.hasOption("mat")) {
-					max_tokens = null;
-				} else {
-					sline = line.getOptionValue("mat");
-					try {
-						max_tokens = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mat: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Min Pretty
-				Integer min_pretty;
-				if(!line.hasOption("mip")) {
-					min_pretty = null;
-				} else {
-					sline = line.getOptionValue("mip");
-					try {
-						min_pretty = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mip: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Max Pretty
-				Integer max_pretty;
-				if(!line.hasOption("map")) {
-					max_pretty = null;
-				} else {
-					sline = line.getOptionValue("map");
-					try {
-						max_pretty = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for map: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Min Judges
-				Integer min_judges;
-				if(!line.hasOption("mij")) {
-					min_judges = null;
-				} else {
-					sline = line.getOptionValue("mij");
-					try {
-						min_judges = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mij: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Min Confidence
-				Integer min_confidence;
-				if(!line.hasOption("mic")) {
-					min_confidence = null;
-				} else {
-					sline = line.getOptionValue("mic");
-					try {
-						min_confidence = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mic: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Min Confidence
-				Integer min_similarity;
-				if(!line.hasOption("mis")) {
-					min_similarity = 0;
-				} else {
-					sline = line.getOptionValue("mis");
-					try {
-						min_similarity = Integer.parseInt(sline);
-					} catch (NumberFormatException e) {
-						panic("Invalid value for mis: " + sline,-1);
-						return;
-					}
-				}
-				
-			// Get Output
-				if(!line.hasOption("o")) {
-					panic("Missing the output file, option -o.",-1);
-					return;
-				}
-				try {
-					output = Paths.get(line.getOptionValue("o"));
-				} catch (InvalidPathException e) {
-					panic("Invalid output path: " + line.getOptionValue("o"),-1);
-					return;
-				}
-				
-				output = FixPath.getAbsolutePath(output);
-				
-				if(Files.exists(output) && Files.isDirectory(output)) {
-					panic("Output path already exists as a directory, and won't be over-written.",-1);
-					return;
-				}
-				if(Files.exists(output) && !Files.isWritable(output)) {
-					panic("Output file already exists, but is not over-writable.",-1);
-					return;
-				}
-				if(!Files.exists(output)) {
-					try {
-						Files.createDirectories(output.getParent());
-						Files.createFile(output);
-					} catch (IOException e) {
-						panic("Could not create output file: " + output,-1);
-						return;
-					}
-				}
-				
-				ToolEvaluator te;
-				te = new ToolEvaluator(
-			                     /*tool_id*/ id,
-			                     /*matcher*/ matcher,
-			             /*similarity_type*/ simtype,
-			                    /*min_size*/ min_lines,
-			 	                /*max_size*/ max_lines,
-			 	         /*min_pretty_size*/ min_pretty,
-			 	         /*max_pretty_size*/ max_pretty,
-			 	              /*min_tokens*/ min_tokens,
-			 	              /*max_tokens*/ max_tokens,
-			 	              /*min_judges*/ min_judges,
-			 	       	  /*min_confidence*/ min_confidence,
-			 	   		/*include_internal*/ false);
-				
-				try {
-					PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(output.toFile())));
-					long time = System.currentTimeMillis();
-					EvaluateTool.writeReport(pw, tool, te, min_similarity);
-					pw.flush();
-					pw.close();
-					time = System.currentTimeMillis() - time;
-					System.err.println("\tElapsed Time: " + time/1000.0 + "s");
-				} catch (IOException e) {
-					System.err.println("IOException while writing output file.  See exception:");
-					e.printStackTrace(System.err);
-					panic(-1);
-				}
-				
-			} catch (SQLException e) {
-				System.err.println("There is some error with the database.  Try a new copy of the database, or report the error:");
-				e.printStackTrace(System.err);
-				System.exit(-1);
-			}
-		} else {
-			panic(-1);
-		}
-		
-	}
-	
+    @CommandLine.Mixin
+    private MixinOptions.ToolId toolId;
+
+    @CommandLine.Mixin
+    private MixinOptions.EvaluationOptions options;
+
+    @CommandLine.Mixin
+    private MixinOptions.OutputFile output;
+
+    @CommandLine.Option(
+            names = {"-m", "--matcher"},
+            description = "Specify the clone matcher. See documentation for configuration strings. "
+                    + "Default is coverage-matcher with 70%% coverage threshold.",
+            paramLabel = "<MATCHER>"
+    )
+    private String matcherSpec = "CoverageMatcher 0.7";
+
+    public static void panic(int exitval, Throwable cause, String message) {
+        if (message != null) System.err.println(message);
+        if (cause != null) cause.printStackTrace(System.err);
+        System.exit(exitval);
+    }
+
+    public static void main(String[] args) {
+        new CommandLine(new EvaluateTool()).execute(args);
+    }
+
+    public Void call() {
+        try {
+            Tool tool = Tools.getTool(toolId.id);
+            if (tool == null) {
+                panic(-1, null, "There is no such tool with ID " + toolId.id + ".");
+                return null;
+            }
+
+            CloneMatcher matcher;
+            String[] parts = matcherSpec.split("\\s+", 2);
+            try {
+                matcher = CloneMatcher.load(tool.getId(), parts[0], parts[1]);
+            } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
+                    | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                panic(-1, e, "Error loading clone matcher.  Please see the exception for details:");
+                return null;
+            }
+
+            ToolEvaluator te;
+            te = new ToolEvaluator(
+                    /*tool_id*/ tool.getId(),
+                    /*matcher*/ matcher,
+                    /*similarity_type*/ options.simtype.val,
+                    /*min_size*/ options.lines.min,
+                    /*max_size*/ options.lines.max,
+                    /*min_pretty_size*/options.pretty.min,
+                    /*max_pretty_size*/options.pretty.max,
+                    /*min_tokens*/ options.tokens.min,
+                    /*max_tokens*/ options.tokens.max,
+                    /*min_judges*/ options.minjudges,
+                    /*min_confidence*/ options.minconfidence,
+                    /*include_internal*/ false);
+
+            try {
+                PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(output.file)));
+                long time = System.currentTimeMillis();
+                EvaluateTool.writeReport(pw, tool, te, options.minsim);
+                pw.flush();
+                pw.close();
+                time = System.currentTimeMillis() - time;
+                System.err.println("\tElapsed Time: " + time / 1000.0 + "s");
+            } catch (IOException e) {
+                panic(-1, e, "IOException while writing output file. See exception:");
+            }
+
+        } catch (SQLException e) {
+            panic(-1, e, "There is some error with the database. Try a new copy of the database, or report the error:");
+        }
+        return null;
+    }
+
 //	public static void interactive() {
 //		Thread canceled = new Thread() {
 //			public void run() {
@@ -629,255 +299,255 @@ public class EvaluateTool {
 //			
 //		}
 //	}
-	
-	public static void writeReport(PrintWriter pw, Tool tool, ToolEvaluator te, int min_similarity) throws SQLException {
 
-		pw.println("-- Tool --");
-		pw.println("       Tool: " + tool.getId() + " - " + tool.getName());
-		pw.println("Description: " + tool.getDescription());
-		pw.println("    #Clones: " + Clones.numClones(tool.getId()));
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Versioning --");
-		pw.println(" BigCloneEval: " + BigCloneEvalVersion.getVersion());
-		pw.println("BigCloneBench: " + BigCloneBenchDB.getVersion());
+    public static void writeReport(PrintWriter pw, Tool tool, ToolEvaluator te, int min_similarity) throws SQLException {
 
-		pw.println("-- Selected Clones --");
-		pw.println("         Min Lines: " + te.getMin_size());
-		pw.println("         Max Lines: " + te.getMax_size());
-		pw.println("        Min Tokens: " + te.getMin_tokens());
-		pw.println("        Max Tokens: " + te.getMax_tokens());
-		pw.println("  Min Pretty Lines: " + te.getMin_pretty_size());
-		pw.println("  Max Pretty Lines: " + te.getMax_pretty_size());
-		pw.println("        Min Judges: " + te.getMin_judges());
-		pw.println("    Min Confidence: " + te.getMin_confidence());
-		pw.println("          Sim Type: " + te.getSimilarity_type_string());
-		pw.println("Minimum Similarity:");
-		pw.println();
-		pw.flush();
+        pw.println("-- Tool --");
+        pw.println("       Tool: " + tool.getId() + " - " + tool.getName());
+        pw.println("Description: " + tool.getDescription());
+        pw.println("    #Clones: " + Clones.numClones(tool.getId()));
+        pw.println();
+        pw.flush();
 
-		pw.println("-- Clone Matcher --");
-		pw.println(te.getMatcher().toString());
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Clone Types --");
-		pw.println("Type-1");
-		pw.println("Type-2");
-		pw.println("Very-Strongly Type-3: Clone similarity in range [90,100) after pretty-printing and identifier/literal normalization.");
-		pw.println("     Strongly Type-3: Clone similarity in range [70, 90) after pretty-printing and identifier/literal normalization.");
-		pw.println("   Moderately Type-3: Clone similarity in range [50, 70) after pretty-printing and identifier/literal normalization.");
-		pw.println("Weakly Type-3/Type-4: Clone similarity in range [ 0, 50) after pretty-printing and identifier/literal normalization.");
-		pw.println();
-		pw.flush();
+        pw.println("-- Versioning --");
+        pw.println(" BigCloneEval: " + BigCloneEvalVersion.getVersion());
+        pw.println("BigCloneBench: " + BigCloneBenchDB.getVersion());
 
-		pw.println("================================================================================");
-		pw.println("\tAll Functionalities");
-		pw.println("================================================================================");
-		
-		pw.println("-- Recall Per Clone Type (type: numDetected / numClones = recall) --");
-		pw.println("              Type-1: " + te.getNumDetected_type1()        + " / " + te.getNumClones_type1()        + " = " + te.getRecall_type1());
-		pw.flush();
-		pw.println("              Type-2: " + te.getNumDetected_type2()        + " / " + te.getNumClones_type2()        + " = " + te.getRecall_type2());
-		pw.flush();
-		pw.println("      Type-2 (blind): " + te.getNumDetected_type2b()       + " / " + te.getNumClones_type2b()       + " = " + te.getRecall_type2b());
-		pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c()       + " / " + te.getNumClones_type2c()       + " = " + te.getRecall_type2c());
-		if(min_similarity <= 90)
-		pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3(90, 100) + " / " + te.getNumClones_type3(90, 100) + " = " + te.getRecall_type3(90, 100));
-		if(min_similarity <= 70)
-		pw.println("     Strongly Type-3: " + te.getNumDetected_type3(70, 90)  + " / " + te.getNumClones_type3(70, 90)  + " = " + te.getRecall_type3(70, 90));
-		if(min_similarity <= 50)
-		pw.println("    Moderatly Type-3: " + te.getNumDetected_type3(50, 70)  + " / " + te.getNumClones_type3(50, 70)  + " = " + te.getRecall_type3(50, 70));
-		if(min_similarity <= 0)
-		pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3(0, 50)   + " / " + te.getNumClones_type3(0, 50)   + " = " + te.getRecall_type3(0, 50));
-		pw.println();
-			
-			
-		pw.println("-- Inter-Project Recall Per Clone Type (type: numDetected / numClones = recall)  --");
-		pw.println("              Type-1: " + te.getNumDetected_type1_inter()        + " / " + te.getNumClones_type1_inter()        + " = " + te.getRecall_type1_inter());
-		pw.println("              Type-2: " + te.getNumDetected_type2_inter()        + " / " + te.getNumClones_type2_inter()        + " = " + te.getRecall_type2_inter());
-		pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_inter()       + " / " + te.getNumClones_type2b_inter()       + " = " + te.getRecall_type2b_inter());
-		pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_inter()       + " / " + te.getNumClones_type2c_inter()       + " = " + te.getRecall_type2c_inter());
-		if(min_similarity <= 90) {
-		pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_inter(90, 100) + " / " + te.getNumClones_type3_inter(90, 100) + " = " + te.getRecall_type3_inter(90, 100));}
-		if(min_similarity <= 70) {
-		pw.println("     Strongly Type-3: " + te.getNumDetected_type3_inter(70, 90)  + " / " + te.getNumClones_type3_inter(70, 90)  + " = " + te.getRecall_type3_inter(70, 90));}
-		if(min_similarity <= 50) {
-		pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_inter(50, 70)  + " / " + te.getNumClones_type3_inter(50, 70)  + " = " + te.getRecall_type3_inter(50, 70));}
-		if(min_similarity <= 0) {
-		pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_inter(0, 50)   + " / " + te.getNumClones_type3_inter(0, 50)   + " = " + te.getRecall_type3_inter(0, 50));}
-		pw.println();
-			
-		pw.println("-- Intra-Project Recall Per Clone Type (type: numDetected / numClones = recall) --");
-		pw.println("-- Recall Per Clone Type --");
-		pw.println("              Type-1: " + te.getNumDetected_type1_intra()        + " / " + te.getNumClones_type1_intra()        + " = " + te.getRecall_type1_intra());
-		pw.println("              Type-2: " + te.getNumDetected_type2_intra()        + " / " + te.getNumClones_type2_intra()        + " = " + te.getRecall_type2_intra());
-		pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_intra()       + " / " + te.getNumClones_type2b_intra()       + " = " + te.getRecall_type2b_intra());
-		pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_intra()       + " / " + te.getNumClones_type2c_intra()       + " = " + te.getRecall_type2c_intra());
-		if(min_similarity <= 90)
-		pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_intra(90, 100) + " / " + te.getNumClones_type3_intra(90, 100) + " = " + te.getRecall_type3_intra(90, 100));
-		if(min_similarity <= 70)
-		pw.println("     Strongly Type-3: " + te.getNumDetected_type3_intra(70, 90)  + " / " + te.getNumClones_type3_intra(70, 90)  + " = " + te.getRecall_type3_intra(70, 90));
-		if(min_similarity <= 50)
-		pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_intra(50, 70)  + " / " + te.getNumClones_type3_intra(50, 70)  + " = " + te.getRecall_type3_intra(50, 70));
-		if(min_similarity <= 0)
-		pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_intra(0, 50)   + " / " + te.getNumClones_type3_intra(0, 50)   + " = " + te.getRecall_type3_intra(0, 50));
-		pw.println();
-			
-		int base = min_similarity;
-		
-		pw.println("-- Type-3 Recall per 5% Region ([start,end]: numDetected / numClones = recall)  --");
-		for(int start = base; start <= 95; start+=5) {
-			int end = start+5;
-			pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3(start, end) + " / " + te.getNumClones_type3(start,end) + " = " + te.getRecall_type3(start, end));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Inter-Project Recall per 5% Region--");
-		for(int start = base; start <= 95; start+=5) {
-			int end = start+5;
-			pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_inter(start, end) + " / " + te.getNumClones_type3_inter(start,end) + " = " + te.getRecall_type3_inter(start, end));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Intra-Project Recall per 5% Region--");
-		for(int start = base; start <= 95; start+=5) {
-			int end = start+5;
-			pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_intra(start, end) + " / " + te.getNumClones_type3_intra(start,end) + " = " + te.getRecall_type3_intra(start, end));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Recall Per Minimum Similarity --");
-		for(int start = base; start <= 95; start+=5) {
-			pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3(start, 100) + " / " + te.getNumClones_type3(start,100) + " = " + te.getRecall_type3(start, 100));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Inter-Project Recall Per Minimum Similarity --");
-		for(int start = base; start <= 95; start+=5) {
-			pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_inter(start, 100) + " / " + te.getNumClones_type3_inter(start,100) + " = " + te.getRecall_type3_inter(start, 100));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Intra-Project Recall Per Minimum Similarity --");
-		for(int start = base; start <= 95; start+=5) {
-			pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_intra(start, 100) + " / " + te.getNumClones_type3_intra(start,100) + " = " + te.getRecall_type3_intra(start, 100));
-		}
-		pw.println();
-		pw.flush();
-		
-		for(long fid : Functionalities.getFunctionalityIds()) {
-		Functionality f = Functionalities.getFunctinality(fid);
-		pw.println("================================================================================");
-		pw.println("Functionality");
-		pw.println("  id: " + fid);
-		pw.println("name: " + f.getName());
-		pw.println("desc: " + f.getDesc());
-		pw.println("================================================================================");
-			
-		pw.println("-- Recall Per Clone Type (type: numDetected / numClones = recall) --");
-		pw.println("              Type-1: " + te.getNumDetected_type1(fid)        + " / " + te.getNumClones_type1(fid)        + " = " + te.getRecall_type1(fid));
-		pw.flush();
-		pw.println("              Type-2: " + te.getNumDetected_type2(fid)        + " / " + te.getNumClones_type2(fid)        + " = " + te.getRecall_type2(fid));
-		pw.flush();
-		pw.println("      Type-2 (blind): " + te.getNumDetected_type2b(fid)       + " / " + te.getNumClones_type2b(fid)       + " = " + te.getRecall_type2b(fid));
-		pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c(fid)       + " / " + te.getNumClones_type2c(fid)       + " = " + te.getRecall_type2c(fid));
-		if(min_similarity <= 90)
-		pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3(fid, 90, 100) + " / " + te.getNumClones_type3(fid, 90, 100) + " = " + te.getRecall_type3(fid, 90, 100));
-		if(min_similarity <= 70)
-		pw.println("     Strongly Type-3: " + te.getNumDetected_type3(fid, 70, 90)  + " / " + te.getNumClones_type3(fid, 70, 90)  + " = " + te.getRecall_type3(fid, 70, 90));
-		if(min_similarity <= 50)
-		pw.println("    Moderatly Type-3: " + te.getNumDetected_type3(fid, 50, 70)  + " / " + te.getNumClones_type3(fid, 50, 70)  + " = " + te.getRecall_type3(fid, 50, 70));
-		if(min_similarity <= 0)
-		pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3(fid, 0, 50)   + " / " + te.getNumClones_type3(fid, 0, 50)   + " = " + te.getRecall_type3(fid, 0, 50));
-		pw.println();
-				
-				
-		pw.println("-- Inter-Project Recall Per Clone Type (type: numDetected / numClones = recall)  --");
-		pw.println("              Type-1: " + te.getNumDetected_type1_inter(fid)        + " / " + te.getNumClones_type1_inter(fid)        + " = " + te.getRecall_type1_inter(fid));
-		pw.println("              Type-2: " + te.getNumDetected_type2_inter(fid)        + " / " + te.getNumClones_type2_inter(fid)        + " = " + te.getRecall_type2_inter(fid));
-		pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_inter(fid)       + " / " + te.getNumClones_type2b_inter(fid)       + " = " + te.getRecall_type2b_inter(fid));
-		pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_inter(fid)       + " / " + te.getNumClones_type2c_inter(fid)       + " = " + te.getRecall_type2c_inter(fid));
-		if(min_similarity <= 90) {
-		pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_inter(fid, 90, 100) + " / " + te.getNumClones_type3_inter(fid, 90, 100) + " = " + te.getRecall_type3_inter(fid, 90, 100));}
-		if(min_similarity <= 70) {
-		pw.println("     Strongly Type-3: " + te.getNumDetected_type3_inter(fid, 70, 90)  + " / " + te.getNumClones_type3_inter(fid, 70, 90)  + " = " + te.getRecall_type3_inter(fid, 70, 90));}
-		if(min_similarity <= 50) {
-		pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_inter(fid, 50, 70)  + " / " + te.getNumClones_type3_inter(fid, 50, 70)  + " = " + te.getRecall_type3_inter(fid, 50, 70));}
-		if(min_similarity <= 0) {
-		pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_inter(fid, 0, 50)   + " / " + te.getNumClones_type3_inter(fid, 0, 50)   + " = " + te.getRecall_type3_inter(fid, 0, 50));}
-		pw.println();
-				
-		pw.println("-- Intra-Project Recall Per Clone Type (type: numDetected / numClones = recall) --");
-		pw.println("-- Recall Per Clone Type --");
-		pw.println("              Type-1: " + te.getNumDetected_type1_intra(fid)        + " / " + te.getNumClones_type1_intra(fid)        + " = " + te.getRecall_type1_intra(fid));
-		pw.println("              Type-2: " + te.getNumDetected_type2_intra(fid)        + " / " + te.getNumClones_type2_intra(fid)        + " = " + te.getRecall_type2_intra(fid));
-		pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_intra(fid)       + " / " + te.getNumClones_type2b_intra(fid)       + " = " + te.getRecall_type2b_intra(fid));
-		pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_intra(fid)       + " / " + te.getNumClones_type2c_intra(fid)       + " = " + te.getRecall_type2c_intra(fid));
-		if(min_similarity <= 90)
-		pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_intra(fid, 90, 100) + " / " + te.getNumClones_type3_intra(fid, 90, 100) + " = " + te.getRecall_type3_intra(fid, 90, 100));
-		if(min_similarity <= 70)
-		pw.println("     Strongly Type-3: " + te.getNumDetected_type3_intra(fid, 70, 90)  + " / " + te.getNumClones_type3_intra(fid, 70, 90)  + " = " + te.getRecall_type3_intra(fid, 70, 90));
-		if(min_similarity <= 50)
-		pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_intra(fid, 50, 70)  + " / " + te.getNumClones_type3_intra(fid, 50, 70)  + " = " + te.getRecall_type3_intra(fid, 50, 70));
-		if(min_similarity <= 0)
-		pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_intra(fid, 0, 50)   + " / " + te.getNumClones_type3_intra(fid, 0, 50)   + " = " + te.getRecall_type3_intra(fid, 0, 50));
-		pw.println();
-		
-		pw.println("-- Type-3 Recall per 5% Region ([start,end]: numDetected / numClones = recall)  --");
-		for(int start = base; start <= 95; start+=5) {
-			int end = start+5;
-			pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3(fid, start, end) + " / " + te.getNumClones_type3(fid, start,end) + " = " + te.getRecall_type3(fid, start, end));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Inter-Project Recall per 5% Region--");
-		for(int start = base; start <= 95; start+=5) {
-			int end = start+5;
-			pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_inter(fid, start, end) + " / " + te.getNumClones_type3_inter(fid, start,end) + " = " + te.getRecall_type3_inter(fid, start, end));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Intra-Project Recall per 5% Region--");
-		for(int start = base; start <= 95; start+=5) {
-			int end = start+5;
-			pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_intra(fid, start, end) + " / " + te.getNumClones_type3_intra(fid, start,end) + " = " + te.getRecall_type3_intra(fid, start, end));
-		}
-		pw.println();
-		pw.flush();
-			
-		pw.println("-- Type-3 Recall Per Minimum Similarity --");
-		for(int start = base; start <= 95; start+=5) {
-			pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3(fid, start, 100) + " / " + te.getNumClones_type3(fid, start,100) + " = " + te.getRecall_type3(fid, start, 100));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Inter-Project Recall Per Minimum Similarity --");
-		for(int start = base; start <= 95; start+=5) {
-			pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_inter(fid, start, 100) + " / " + te.getNumClones_type3_inter(fid, start,100) + " = " + te.getRecall_type3_inter(fid, start, 100));
-		}
-		pw.println();
-		pw.flush();
-		
-		pw.println("-- Type-3 Intra-Project Recall Per Minimum Similarity --");
-		for(int start = base; start <= 95; start+=5) {
-			pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_intra(fid, start, 100) + " / " + te.getNumClones_type3_intra(fid, start,100) + " = " + te.getRecall_type3_intra(fid, start, 100));
-		}
-		pw.println();
-		pw.flush();
-		}
-		
-	}
-	
+        pw.println("-- Selected Clones --");
+        pw.println("         Min Lines: " + te.getMin_size());
+        pw.println("         Max Lines: " + te.getMax_size());
+        pw.println("        Min Tokens: " + te.getMin_tokens());
+        pw.println("        Max Tokens: " + te.getMax_tokens());
+        pw.println("  Min Pretty Lines: " + te.getMin_pretty_size());
+        pw.println("  Max Pretty Lines: " + te.getMax_pretty_size());
+        pw.println("        Min Judges: " + te.getMin_judges());
+        pw.println("    Min Confidence: " + te.getMin_confidence());
+        pw.println("          Sim Type: " + te.getSimilarity_type_string());
+        pw.println("Minimum Similarity:");
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Clone Matcher --");
+        pw.println(te.getMatcher().toString());
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Clone Types --");
+        pw.println("Type-1");
+        pw.println("Type-2");
+        pw.println("Very-Strongly Type-3: Clone similarity in range [90,100) after pretty-printing and identifier/literal normalization.");
+        pw.println("     Strongly Type-3: Clone similarity in range [70, 90) after pretty-printing and identifier/literal normalization.");
+        pw.println("   Moderately Type-3: Clone similarity in range [50, 70) after pretty-printing and identifier/literal normalization.");
+        pw.println("Weakly Type-3/Type-4: Clone similarity in range [ 0, 50) after pretty-printing and identifier/literal normalization.");
+        pw.println();
+        pw.flush();
+
+        pw.println("================================================================================");
+        pw.println("\tAll Functionalities");
+        pw.println("================================================================================");
+
+        pw.println("-- Recall Per Clone Type (type: numDetected / numClones = recall) --");
+        pw.println("              Type-1: " + te.getNumDetected_type1()        + " / " + te.getNumClones_type1()        + " = " + te.getRecall_type1());
+        pw.flush();
+        pw.println("              Type-2: " + te.getNumDetected_type2()        + " / " + te.getNumClones_type2()        + " = " + te.getRecall_type2());
+        pw.flush();
+        pw.println("      Type-2 (blind): " + te.getNumDetected_type2b()       + " / " + te.getNumClones_type2b()       + " = " + te.getRecall_type2b());
+        pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c()       + " / " + te.getNumClones_type2c()       + " = " + te.getRecall_type2c());
+        if(min_similarity <= 90)
+            pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3(90, 100) + " / " + te.getNumClones_type3(90, 100) + " = " + te.getRecall_type3(90, 100));
+        if(min_similarity <= 70)
+            pw.println("     Strongly Type-3: " + te.getNumDetected_type3(70, 90)  + " / " + te.getNumClones_type3(70, 90)  + " = " + te.getRecall_type3(70, 90));
+        if(min_similarity <= 50)
+            pw.println("    Moderatly Type-3: " + te.getNumDetected_type3(50, 70)  + " / " + te.getNumClones_type3(50, 70)  + " = " + te.getRecall_type3(50, 70));
+        if(min_similarity <= 0)
+            pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3(0, 50)   + " / " + te.getNumClones_type3(0, 50)   + " = " + te.getRecall_type3(0, 50));
+        pw.println();
+
+
+        pw.println("-- Inter-Project Recall Per Clone Type (type: numDetected / numClones = recall)  --");
+        pw.println("              Type-1: " + te.getNumDetected_type1_inter()        + " / " + te.getNumClones_type1_inter()        + " = " + te.getRecall_type1_inter());
+        pw.println("              Type-2: " + te.getNumDetected_type2_inter()        + " / " + te.getNumClones_type2_inter()        + " = " + te.getRecall_type2_inter());
+        pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_inter()       + " / " + te.getNumClones_type2b_inter()       + " = " + te.getRecall_type2b_inter());
+        pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_inter()       + " / " + te.getNumClones_type2c_inter()       + " = " + te.getRecall_type2c_inter());
+        if(min_similarity <= 90) {
+            pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_inter(90, 100) + " / " + te.getNumClones_type3_inter(90, 100) + " = " + te.getRecall_type3_inter(90, 100));}
+        if(min_similarity <= 70) {
+            pw.println("     Strongly Type-3: " + te.getNumDetected_type3_inter(70, 90)  + " / " + te.getNumClones_type3_inter(70, 90)  + " = " + te.getRecall_type3_inter(70, 90));}
+        if(min_similarity <= 50) {
+            pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_inter(50, 70)  + " / " + te.getNumClones_type3_inter(50, 70)  + " = " + te.getRecall_type3_inter(50, 70));}
+        if(min_similarity <= 0) {
+            pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_inter(0, 50)   + " / " + te.getNumClones_type3_inter(0, 50)   + " = " + te.getRecall_type3_inter(0, 50));}
+        pw.println();
+
+        pw.println("-- Intra-Project Recall Per Clone Type (type: numDetected / numClones = recall) --");
+        pw.println("-- Recall Per Clone Type --");
+        pw.println("              Type-1: " + te.getNumDetected_type1_intra()        + " / " + te.getNumClones_type1_intra()        + " = " + te.getRecall_type1_intra());
+        pw.println("              Type-2: " + te.getNumDetected_type2_intra()        + " / " + te.getNumClones_type2_intra()        + " = " + te.getRecall_type2_intra());
+        pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_intra()       + " / " + te.getNumClones_type2b_intra()       + " = " + te.getRecall_type2b_intra());
+        pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_intra()       + " / " + te.getNumClones_type2c_intra()       + " = " + te.getRecall_type2c_intra());
+        if(min_similarity <= 90)
+            pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_intra(90, 100) + " / " + te.getNumClones_type3_intra(90, 100) + " = " + te.getRecall_type3_intra(90, 100));
+        if(min_similarity <= 70)
+            pw.println("     Strongly Type-3: " + te.getNumDetected_type3_intra(70, 90)  + " / " + te.getNumClones_type3_intra(70, 90)  + " = " + te.getRecall_type3_intra(70, 90));
+        if(min_similarity <= 50)
+            pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_intra(50, 70)  + " / " + te.getNumClones_type3_intra(50, 70)  + " = " + te.getRecall_type3_intra(50, 70));
+        if(min_similarity <= 0)
+            pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_intra(0, 50)   + " / " + te.getNumClones_type3_intra(0, 50)   + " = " + te.getRecall_type3_intra(0, 50));
+        pw.println();
+
+        int base = min_similarity;
+
+        pw.println("-- Type-3 Recall per 5% Region ([start,end]: numDetected / numClones = recall)  --");
+        for(int start = base; start <= 95; start+=5) {
+            int end = start+5;
+            pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3(start, end) + " / " + te.getNumClones_type3(start,end) + " = " + te.getRecall_type3(start, end));
+        }
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Type-3 Inter-Project Recall per 5% Region--");
+        for(int start = base; start <= 95; start+=5) {
+            int end = start+5;
+            pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_inter(start, end) + " / " + te.getNumClones_type3_inter(start,end) + " = " + te.getRecall_type3_inter(start, end));
+        }
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Type-3 Intra-Project Recall per 5% Region--");
+        for(int start = base; start <= 95; start+=5) {
+            int end = start+5;
+            pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_intra(start, end) + " / " + te.getNumClones_type3_intra(start,end) + " = " + te.getRecall_type3_intra(start, end));
+        }
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Type-3 Recall Per Minimum Similarity --");
+        for(int start = base; start <= 95; start+=5) {
+            pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3(start, 100) + " / " + te.getNumClones_type3(start,100) + " = " + te.getRecall_type3(start, 100));
+        }
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Type-3 Inter-Project Recall Per Minimum Similarity --");
+        for(int start = base; start <= 95; start+=5) {
+            pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_inter(start, 100) + " / " + te.getNumClones_type3_inter(start,100) + " = " + te.getRecall_type3_inter(start, 100));
+        }
+        pw.println();
+        pw.flush();
+
+        pw.println("-- Type-3 Intra-Project Recall Per Minimum Similarity --");
+        for(int start = base; start <= 95; start+=5) {
+            pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_intra(start, 100) + " / " + te.getNumClones_type3_intra(start,100) + " = " + te.getRecall_type3_intra(start, 100));
+        }
+        pw.println();
+        pw.flush();
+
+        for(long fid : Functionalities.getFunctionalityIds()) {
+            Functionality f = Functionalities.getFunctinality(fid);
+            pw.println("================================================================================");
+            pw.println("Functionality");
+            pw.println("  id: " + fid);
+            pw.println("name: " + f.getName());
+            pw.println("desc: " + f.getDesc());
+            pw.println("================================================================================");
+
+            pw.println("-- Recall Per Clone Type (type: numDetected / numClones = recall) --");
+            pw.println("              Type-1: " + te.getNumDetected_type1(fid)        + " / " + te.getNumClones_type1(fid)        + " = " + te.getRecall_type1(fid));
+            pw.flush();
+            pw.println("              Type-2: " + te.getNumDetected_type2(fid)        + " / " + te.getNumClones_type2(fid)        + " = " + te.getRecall_type2(fid));
+            pw.flush();
+            pw.println("      Type-2 (blind): " + te.getNumDetected_type2b(fid)       + " / " + te.getNumClones_type2b(fid)       + " = " + te.getRecall_type2b(fid));
+            pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c(fid)       + " / " + te.getNumClones_type2c(fid)       + " = " + te.getRecall_type2c(fid));
+            if(min_similarity <= 90)
+                pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3(fid, 90, 100) + " / " + te.getNumClones_type3(fid, 90, 100) + " = " + te.getRecall_type3(fid, 90, 100));
+            if(min_similarity <= 70)
+                pw.println("     Strongly Type-3: " + te.getNumDetected_type3(fid, 70, 90)  + " / " + te.getNumClones_type3(fid, 70, 90)  + " = " + te.getRecall_type3(fid, 70, 90));
+            if(min_similarity <= 50)
+                pw.println("    Moderatly Type-3: " + te.getNumDetected_type3(fid, 50, 70)  + " / " + te.getNumClones_type3(fid, 50, 70)  + " = " + te.getRecall_type3(fid, 50, 70));
+            if(min_similarity <= 0)
+                pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3(fid, 0, 50)   + " / " + te.getNumClones_type3(fid, 0, 50)   + " = " + te.getRecall_type3(fid, 0, 50));
+            pw.println();
+
+
+            pw.println("-- Inter-Project Recall Per Clone Type (type: numDetected / numClones = recall)  --");
+            pw.println("              Type-1: " + te.getNumDetected_type1_inter(fid)        + " / " + te.getNumClones_type1_inter(fid)        + " = " + te.getRecall_type1_inter(fid));
+            pw.println("              Type-2: " + te.getNumDetected_type2_inter(fid)        + " / " + te.getNumClones_type2_inter(fid)        + " = " + te.getRecall_type2_inter(fid));
+            pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_inter(fid)       + " / " + te.getNumClones_type2b_inter(fid)       + " = " + te.getRecall_type2b_inter(fid));
+            pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_inter(fid)       + " / " + te.getNumClones_type2c_inter(fid)       + " = " + te.getRecall_type2c_inter(fid));
+            if(min_similarity <= 90) {
+                pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_inter(fid, 90, 100) + " / " + te.getNumClones_type3_inter(fid, 90, 100) + " = " + te.getRecall_type3_inter(fid, 90, 100));}
+            if(min_similarity <= 70) {
+                pw.println("     Strongly Type-3: " + te.getNumDetected_type3_inter(fid, 70, 90)  + " / " + te.getNumClones_type3_inter(fid, 70, 90)  + " = " + te.getRecall_type3_inter(fid, 70, 90));}
+            if(min_similarity <= 50) {
+                pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_inter(fid, 50, 70)  + " / " + te.getNumClones_type3_inter(fid, 50, 70)  + " = " + te.getRecall_type3_inter(fid, 50, 70));}
+            if(min_similarity <= 0) {
+                pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_inter(fid, 0, 50)   + " / " + te.getNumClones_type3_inter(fid, 0, 50)   + " = " + te.getRecall_type3_inter(fid, 0, 50));}
+            pw.println();
+
+            pw.println("-- Intra-Project Recall Per Clone Type (type: numDetected / numClones = recall) --");
+            pw.println("-- Recall Per Clone Type --");
+            pw.println("              Type-1: " + te.getNumDetected_type1_intra(fid)        + " / " + te.getNumClones_type1_intra(fid)        + " = " + te.getRecall_type1_intra(fid));
+            pw.println("              Type-2: " + te.getNumDetected_type2_intra(fid)        + " / " + te.getNumClones_type2_intra(fid)        + " = " + te.getRecall_type2_intra(fid));
+            pw.println("      Type-2 (blind): " + te.getNumDetected_type2b_intra(fid)       + " / " + te.getNumClones_type2b_intra(fid)       + " = " + te.getRecall_type2b_intra(fid));
+            pw.println(" Type-2 (consistent): " + te.getNumDetected_type2c_intra(fid)       + " / " + te.getNumClones_type2c_intra(fid)       + " = " + te.getRecall_type2c_intra(fid));
+            if(min_similarity <= 90)
+                pw.println("Very-Strongly Type-3: " + te.getNumDetected_type3_intra(fid, 90, 100) + " / " + te.getNumClones_type3_intra(fid, 90, 100) + " = " + te.getRecall_type3_intra(fid, 90, 100));
+            if(min_similarity <= 70)
+                pw.println("     Strongly Type-3: " + te.getNumDetected_type3_intra(fid, 70, 90)  + " / " + te.getNumClones_type3_intra(fid, 70, 90)  + " = " + te.getRecall_type3_intra(fid, 70, 90));
+            if(min_similarity <= 50)
+                pw.println("    Moderatly Type-3: " + te.getNumDetected_type3_intra(fid, 50, 70)  + " / " + te.getNumClones_type3_intra(fid, 50, 70)  + " = " + te.getRecall_type3_intra(fid, 50, 70));
+            if(min_similarity <= 0)
+                pw.println("Weakly Type-3/Type-4: " + te.getNumDetected_type3_intra(fid, 0, 50)   + " / " + te.getNumClones_type3_intra(fid, 0, 50)   + " = " + te.getRecall_type3_intra(fid, 0, 50));
+            pw.println();
+
+            pw.println("-- Type-3 Recall per 5% Region ([start,end]: numDetected / numClones = recall)  --");
+            for(int start = base; start <= 95; start+=5) {
+                int end = start+5;
+                pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3(fid, start, end) + " / " + te.getNumClones_type3(fid, start,end) + " = " + te.getRecall_type3(fid, start, end));
+            }
+            pw.println();
+            pw.flush();
+
+            pw.println("-- Type-3 Inter-Project Recall per 5% Region--");
+            for(int start = base; start <= 95; start+=5) {
+                int end = start+5;
+                pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_inter(fid, start, end) + " / " + te.getNumClones_type3_inter(fid, start,end) + " = " + te.getRecall_type3_inter(fid, start, end));
+            }
+            pw.println();
+            pw.flush();
+
+            pw.println("-- Type-3 Intra-Project Recall per 5% Region--");
+            for(int start = base; start <= 95; start+=5) {
+                int end = start+5;
+                pw.println("[" + start + "," + end + "]: " + te.getNumDetected_type3_intra(fid, start, end) + " / " + te.getNumClones_type3_intra(fid, start,end) + " = " + te.getRecall_type3_intra(fid, start, end));
+            }
+            pw.println();
+            pw.flush();
+
+            pw.println("-- Type-3 Recall Per Minimum Similarity --");
+            for(int start = base; start <= 95; start+=5) {
+                pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3(fid, start, 100) + " / " + te.getNumClones_type3(fid, start,100) + " = " + te.getRecall_type3(fid, start, 100));
+            }
+            pw.println();
+            pw.flush();
+
+            pw.println("-- Type-3 Inter-Project Recall Per Minimum Similarity --");
+            for(int start = base; start <= 95; start+=5) {
+                pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_inter(fid, start, 100) + " / " + te.getNumClones_type3_inter(fid, start,100) + " = " + te.getRecall_type3_inter(fid, start, 100));
+            }
+            pw.println();
+            pw.flush();
+
+            pw.println("-- Type-3 Intra-Project Recall Per Minimum Similarity --");
+            for(int start = base; start <= 95; start+=5) {
+                pw.println("[" + start + "," + 100 + "]: " + te.getNumDetected_type3_intra(fid, start, 100) + " / " + te.getNumClones_type3_intra(fid, start,100) + " = " + te.getRecall_type3_intra(fid, start, 100));
+            }
+            pw.println();
+            pw.flush();
+        }
+
+    }
+
 //	private static CloneMatcher setupCloneMatcher(Scanner scanner, long id) throws SQLException {
 //		CloneMatcher retval;
 //		while(true) {
@@ -1045,8 +715,8 @@ public class EvaluateTool {
 //			return id;
 //		}
 //	}
-	
-	// Output Dataset Stats (based on selection)
-	// Output full statistics
-	
+
+    // Output Dataset Stats (based on selection)
+    // Output full statistics
+
 }
