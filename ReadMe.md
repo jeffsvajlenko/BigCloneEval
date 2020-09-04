@@ -34,11 +34,30 @@ Database and database files available at:  http://jeff.svajlenko.com/bigcloneeva
 ## Contact Information
 
 We are happy to answer any of your questions regarding BigCloneEval or BigCloneBench.
-Please report any bugs you encounter so we can address them promptly.
-Feel free to contact us:
 
 - Jeff Svajlenko (jeff.svajlenko@gmail.com)
 - Chanchal K. Roy (chanchal.roy@usask.ca)
+
+## Contributing
+
+Feel free to open an issue if you encounter issues or bugs.
+
+We also welcome bug fixes, improvements and feature additions by pull request.  Since it may
+take us some time to integrate your changes into this repository, the ideal method is to fork
+this repoistory for your changes and submit your pull request.  Feel free to post your fork
+in your pull request and/or an issue so that others can use your changes while we work to integrate
+into the main repository.
+
+### Maintainers
+@jeffsvajlenko
+
+### Contributors
+@qw3ry  
+@SimonBaars  
+@exKAZUu  
+@T45K
+
+(An always up-to-date list can be found [here](https://github.com/jeffsvajlenko/BigCloneEval/graphs/contributors)
 
 ## Installation and Setup
 
