@@ -86,7 +86,7 @@ from the following webpage:
 
 http://jeff.svajlenko.com/bigcloneeval
 
-Direct link: https://www.dropbox.com/s/z2k8r78l63r68os/BigCloneBench_BCEvalVersion.tar.gz?dl=0
+Direct link: https://1drv.ms/u/s!AhXbM6MKt_yLj_NwwVacvUzmi6uorA?e=eMu0P4
 
 Extract the contents of BigCloneBench (BigCloneBench_BCEvalVersion.tar.gz) into the
 'bigclonebenchdb' directory of the BigCloneEval distribution.
@@ -100,7 +100,7 @@ the following webpage:
 
 http://jeff.svajlenko.com/bigcloneeval
 
-Direct link: https://www.dropbox.com/s/xdio16u396imz29/IJaDataset_BCEvalVersion.tar.gz?dl=0
+Direct link: https://1drv.ms/u/s!AhXbM6MKt_yLj_N15CewgjM7Y8NLKA?e=cScoRJ
 
 Extract the contents of IJaDataset (IJaDataset_BCEvalVersion.tar.gz) into the 'ijadataset'
 directory of the BigCloneEval distribution.
